@@ -1,0 +1,79 @@
+Activity Monitoring Analysis
+========================================================
+
+This R Markdown document is an analysis of the activity monitoring data.
+
+Load the data
+```{r echo=TRUE}
+data <- read.csv('activity.csv')
+```
+
+## Mean total number of steps taken per day
+### Histogram of the number of steps
+```{r echo=TRUE}
+data_clean <- na.omit(data)
+summed <- aggregate(data_clean$steps, by = list(Date=data_clean$date), sum)
+hist(summed$x, xlab = "Steps", main = "Histogram of total number of steps per day")
+summary(summed)
+```
+
+### Mean & Median of the total number of steps per day
+```{r echo=TRUE}
+mean(summed$x)
+median(summed$x)
+```
+
+## Average daily activity pattern
+### Time series plot for average activity per interval
+```{r echo=TRUE}
+require(lattice)
+avginterval <- aggregate(data_clean$steps, by = list(Interval=data_clean$interval), mean)
+xyplot(x ~ Interval, data = avginterval, type = "l", main = "Average activity per interval", ylab = "Average Steps")
+```
+### Max 5-minute interval across all days
+``` {r echo=TRUE}
+avginterval[which.max(avginterval$x),1]
+```
+
+## Imputing Missing Data
+### Total number of missing values
+```{r echo=TRUE}
+sum(!complete.cases(data))
+```
+
+### Filling missing data
+```{r echo=TRUE}
+require(plyr)
+impute.mean <- function(x) replace(x, is.na(x), mean(x, na.rm = TRUE))
+data_filled <- ddply(data, ~interval, transform, steps = impute.mean(steps))
+data_filled <- data_filled[order(data_filled$date), ]
+```
+
+### Histogram of total steps each day for imputed data
+```{r echo=TRUE}
+summed_filled <- aggregate(data_filled$steps, by = list(Date=data_filled$date), sum)
+hist(summed_filled$x, xlab = "Steps", main = "Histogram of total number of steps per day")
+summary(summed_filled)
+```
+### Mean & Median of the total number of steps per day for imputed data
+```{r echo=TRUE}
+mean(summed_filled$x)
+median(summed_filled$x)
+```
+
+## Difference in activity patterns between weekdays and weekends
+### Create weekday and weekend factors
+``` {r echo=TRUE}
+data_filled$weekdays <- weekdays(as.Date(data_filled$date))
+data_filled$weekdays[data_filled$weekdays %in% c("Saturday", "Sunday")] <- "weekend"
+data_filled$weekdays[!data_filled$weekdays %in% c("weekend")] <- "weekday"
+data_filled$weekdays <- as.factor(data_filled$weekdays)
+str(data_filled)
+```
+
+### Time series plot for average activity
+``` {r echo=TRUE}
+require(lattice)
+steps_by_weekdays <- aggregate(data_filled$steps, by = list(weekdays=data_filled$weekdays, interval=data_filled$interval), mean)
+xyplot(x ~ interval | weekdays, type = "l", data = steps_by_weekdays, xlab = "Interval", ylab = "Number of steps", layout = c(1, 2))
+```
