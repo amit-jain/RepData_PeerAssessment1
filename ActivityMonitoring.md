@@ -100,6 +100,7 @@ sum(!complete.cases(data))
 
 
 ### Filling missing data
+Impute the missing steps by the mean of the steps for that interval across all days.
 
 ```r
 require(plyr)
