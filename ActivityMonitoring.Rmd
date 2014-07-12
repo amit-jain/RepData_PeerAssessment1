@@ -42,6 +42,7 @@ sum(!complete.cases(data))
 ```
 
 ### Filling missing data
+Impute the missing steps by the mean of the steps for that interval across all days.
 ```{r echo=TRUE}
 require(plyr)
 impute.mean <- function(x) replace(x, is.na(x), mean(x, na.rm = TRUE))
